@@ -9,11 +9,11 @@ The script summarizes power log contents, calculates standard deviations of CPU 
 ### Example Usage
 
 ```
-> /Applications/Intel\ Power\ Gadget/PowerLog -duration 30 -resolution 1000 -file "foo.pl"
+> /Applications/Intel\ Power\ Gadget/PowerLog -duration 30 -resolution 1000 -file "foo.csv"
 ...
 
-> python power-gadget.py --power-log-file foo.pl
-Parsed power log file: foo.pl
+> python power-gadget.py --power-log-file foo.csv
+Parsed power log file: foo.csv
 TABLE
   "System Time": [17:09:47:270, 17:09:48:276, 17:09:49:281, 17:09:50:287, 17:09:51:292, 17:09:52:298, ... (26 more values)]
   "RDTSC": [6.99044361899e+13, 6.99073570737e+13, 6.99102764682e+13, 6.99131960937e+13, 6.99161155349e+13, 6.9919035244e+13, ... (26 more values)]
