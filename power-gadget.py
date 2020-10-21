@@ -4,13 +4,15 @@ import math
 # Parsing Power Logs
 
 # Returns (table_keys, table, summaries), where...
-# - table_keys is in array of keys in the order that they were parsed.
+# - table_keys is in array of table keys in the parsing order.
 # - table is a dictionary mapping keys to arrays of all values.
+# - summaries_keys is an array of summaries keys in the parsing order.
 # - summaries is an array of (string, float).
 def parse_power_log(filename):
   with open(filename) as file:
     table_keys = []
     table = {}
+    summaries_keys = []
     summaries = {}
 
     is_parsing_table = True
@@ -41,25 +43,41 @@ def parse_power_log(filename):
         key = items[0][:i]
         value = items[0][i + 3:]
         value = float(value)
+        summaries_keys.append(key)
         summaries[key] = value
-    return (table_keys, table, summaries)
+    return (table_keys, table, summaries_keys, summaries)
 
-# E.g. '"item 1","    12.3"' => ["item 1", 12.3]
+# On macOS items are enclosed by quotes. On Windows, they are not.
+# macOS example: '"item 1","    12.3"' => ["item 1", 12.3]
+# Windows example: 'item 1,    12.3' => ["item 1", 12.3]
 def parse_items(line):
   # Parse items as strings.
   items = []
   i = line.find('"')
-  assert i == 0
-  while True:
-    i = i + 1
-    end = line.find('"', i)
-    assert end != -1
-    items.append(line[i:end])
-    i = end + 1
-    if i == len(line):
-      break
-    assert line[i] == ","
-    i = i + 1
+  if i == 0:
+    # macOS parsing.
+    while True:
+      i += 1
+      end = line.find('"', i)
+      assert end != -1
+      items.append(line[i:end])
+      i = end + 1
+      if i == len(line):
+        break
+      assert line[i] == ","
+      i += 1
+  else:
+    # Windows parsing.
+    while True:
+      i += 1
+      end = line.find(',', i)
+      if end == -1:
+        end = len(line)
+      items.append(line[i:end])
+      i = end
+      if i == len(line):
+        break
+      assert line[i] == ","
   # Remove trailing spaces and convert string-numbers to numbers.
   for i in range(len(items)):
     items[i] = items[i].strip()
@@ -69,7 +87,7 @@ def parse_items(line):
       pass
   return items
 
-def print_parsed_power_log(table_keys, table, summaries):
+def print_parsed_power_log(table_keys, table, summaries_keys, summaries):
   print("TABLE")
   for key in table_keys:
     line = '  "' + key + '": ['
@@ -86,7 +104,7 @@ def print_parsed_power_log(table_keys, table, summaries):
     line += "]"
     print(line)
   print("SUMMARY")
-  for key in summaries:
+  for key in summaries_keys:
     print("  {0}: {1}".format(key, summaries[key]))
 
 # Main
@@ -148,17 +166,15 @@ def main():
     print(line)
     return
 
-  kCpuUtilizationKey = "CPU Utilization(%)"
-  kCpuFrequencyKey = "CPU Frequency_0(MHz)"
-  kAveragePackagePowerKey = "Average Package Power_0 (Watt)"
-  kAverageDramPowerKey = "Average Package DRAM_0 (Watt)"
-
   # Parse Power Log
-  (table_keys, table, summaries) = parse_power_log(power_log_filename)
+  (table_keys, table, summaries_keys, summaries) =\
+      parse_power_log(power_log_filename)
   print("Parsed power log file: " + power_log_filename)
-  print_parsed_power_log(table_keys, table, summaries)
+  print_parsed_power_log(table_keys, table, summaries_keys, summaries)
   print("")
 
+  kCpuUtilizationKey = "CPU Utilization(%)"
+  kCpuFrequencyKey = "CPU Frequency_0(MHz)"
   cpu_utilization_values = table[kCpuUtilizationKey]
   cpu_frequency_values = table[kCpuFrequencyKey]
   assert len(cpu_utilization_values) == len(cpu_frequency_values)
@@ -186,11 +202,25 @@ def main():
       total_cycles_available / len(cpu_utilization_values)
 
   # Power Usage
-  # There are three average powers listed in PowerLog's summary: package, IA and
-  # DRAM. IA is supposedly a subset of the package, so the total is said to be
-  # package + DRAWM.
-  average_power_usage = summaries[kAveragePackagePowerKey] +\
-                        summaries[kAverageDramPowerKey]
+  #
+  # On Windows, there are four average powers listed in PowerLog's summary:
+  # processor, IA, DRAM and GT. Per documentation[1], the processor power is a
+  # summary of IA, GT and others not measured. As such, the total power of the
+  # system is estimated as "processor + DRAM".
+  #
+  # On macOS, there are three average powers:
+  # package, IA and DRAM. Assuming package also includes the IA, the total power
+  # of the system is estimated as "package + DRAM".
+  #
+  # [1] https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
+  kAverageProcessorPowerKey = "Average Processor Power_0 (Watt)"  # Windows
+  kAverageDramPowerKey = "Average DRAM Power_0 (Watt)"            # Windows
+  kAveragePackagePowerKey = "Average Package Power_0 (Watt)"      # macOS
+  kAveragePackageDramPowerKey = "Average Package DRAM_0 (Watt)"   # macOS
+  average_power_usage = summaries.get(kAverageProcessorPowerKey, 0) +\
+                        summaries.get(kAverageDramPowerKey, 0) +\
+                        summaries.get(kAveragePackagePowerKey, 0) +\
+                        summaries.get(kAveragePackageDramPowerKey, 0)
 
   # Results
   print("CPU UTILIZATION AND FREQUENCY OF SAMPLES")
@@ -207,7 +237,7 @@ def main():
   print("   Average Cycles Available(M): {0}".format(\
             cycles_available_per_sample))
   print("")
-  print("POWER USAGE (PACKAGE + DRAM)")
+  print("POWER USAGE (PROCESSOR OR PACKAGE + DRAM)")
   print("  Average Total Power Usage(W): {0}".format(average_power_usage))
 
 if __name__ == "__main__":
