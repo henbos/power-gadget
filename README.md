@@ -6,6 +6,10 @@ This is a script that parses power logs collected with [Intel Power Gadget](http
 
 The script summarizes power log contents, calculates standard deviations of CPU utilization and CPU frequencies, normalizes the CPU utilization by frequency and outputs the system's total average power consumption.
 
+#### Warning
+
+This script has only been tested when running PowerLog with a resolution of 1000 (i.e. taking one sample per second). Try different resolutions at your own risk.
+
 ### Example Usage
 
 ```
@@ -40,17 +44,17 @@ TABLE
   "GT Frequency(MHz)": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ... (26 more values)]
   "GT Requsted Frequency(MHz)": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ... (26 more values)]
 SUMMARY
-  Average Package Power_0 (Watt): 2.010071
-  Cumulative IA Energy_0 (mWh): 4.84653
-  Average Package DRAM_0 (Watt): 1.087666
-  Cumulative IA Energy_0 (Joules): 17.44751
-  Average Package IA_0 (Watt): 0.543046
-  Cumulative Package Energy_0 (Joules): 64.581543
-  Cumulative DRAM Energy_0 (Joules): 34.945618
-  Measured RDTSC Frequency (GHz): 2.904
-  Cumulative DRAM Energy_0 (mWh): 9.707116
-  Cumulative Package Energy_0 (mWh): 17.939317
   Total Elapsed Time (sec): 32.128983
+  Measured RDTSC Frequency (GHz): 2.904
+  Cumulative Package Energy_0 (Joules): 64.581543
+  Cumulative Package Energy_0 (mWh): 17.939317
+  Average Package Power_0 (Watt): 2.010071
+  Cumulative IA Energy_0 (Joules): 17.44751
+  Cumulative IA Energy_0 (mWh): 4.84653
+  Average Package IA_0 (Watt): 0.543046
+  Cumulative DRAM Energy_0 (Joules): 34.945618
+  Cumulative DRAM Energy_0 (mWh): 9.707116
+  Average Package DRAM_0 (Watt): 1.087666
 
 CPU UTILIZATION AND FREQUENCY OF SAMPLES
     Average CPU Utilization(%): 1.4456875  (std dev: 0.583998471611)
@@ -61,9 +65,31 @@ NORMALIZED CPU UTILIZATION (AGGREGATED FROM SAMPLES)
     Average Cycles Utilized(M): 26.512970625
    Average Cycles Available(M): 1861.03125
 
-POWER USAGE (PACKAGE + DRAM)
+POWER USAGE (PROCESSOR OR PACKAGE + DRAM)
   Average Total Power Usage(W): 3.097737
 ```
+
+### Q&A
+
+> What's the difference between "Average CPU Utilization(%)" and "Cycles Utilized(%)"?
+
+"Average CPU Utilization(%)" is the average CPU utilization of all samples, not taking CPU frequencies into account. "Cycles Utilized(%)" is the estimated number of cycles utilized out of all possible cycles, i.e. it takes the CPU frequency of each sample into account.
+
+For example, imagine the two following CPU Utilization and CPU Frequency samples:
+```
+(5%, 1000 MHz)
+(10%, 2000 MHz)
+```
+
+The "Average CPU Utilization(%)" is (5% + 10%) / 2 = 7.5%.
+
+The "Cycles Utilized(%)" is (5% * 1000 + 10% * 2000) / (1000 + 2000) = 8.33%.
+
+If the CPU frequency is fairly stable during the measurements, these values will be quite similar. But if the CPU frequencies are variable during the test, the "Cycles Utilized(%)" might give a more honest picture of the amount of workload on the system. When comparing multiple measurements "Average Cycles Available(M)" is of interest.
+
+> What are "Average Cycles Available(M)"?
+
+These are the average "CPU Frequency_0(MHz)" of all samples. When sampling once per second, this is an estimate of the amount of CPU cycles per second, i.e. the "effective MHz" of the processor.
 
 ### Tips
 
