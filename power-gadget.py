@@ -107,22 +107,7 @@ def print_parsed_power_log(table_keys, table, summaries_keys, summaries):
   for key in summaries_keys:
     print("  {0}: {1}".format(key, summaries[key]))
 
-# Main
-
-def parse_argv():
-  arguments = {}
-  i = 1
-  while i < len(sys.argv):
-    key = sys.argv[i]
-    assert key.startswith("--")
-    assert key.find("=") == -1
-    value = ""
-    if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("--"):
-      i = i + 1
-      value = sys.argv[i]
-    arguments[key] = value
-    i = i + 1
-  return arguments
+# Math utils
 
 def calculate_standard_deviation(values):
   mean = 0
@@ -140,6 +125,23 @@ def calculate_standard_deviation(values):
   standard_deviation = math.sqrt(variance)
   return (standard_deviation, variance, mean)
 
+# Main
+
+def parse_argv():
+  arguments = {}
+  i = 1
+  while i < len(sys.argv):
+    key = sys.argv[i]
+    assert key.startswith("--")
+    assert key.find("=") == -1
+    value = ""
+    if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("--"):
+      i = i + 1
+      value = sys.argv[i]
+    arguments[key] = value
+    i = i + 1
+  return arguments
+
 def main():
   try:
     arguments = parse_argv()
@@ -148,8 +150,15 @@ def main():
     print("")
     arguments = {"--help": ""}
   if "--help" in arguments:
+    print("Use --power-log-file to specify the log file.")
+    print("Optionally, use --copy-friendly for a shorter copy-friendly result.")
+    print("")
     print("Example Usage:")
-    print("  python power-gadget.py --power-log-file 'test.pl'")
+    print("  python power-gadget.py --power-log-file 'test.csv'")
+    print("")
+    print("Copying to clipboard on macOS to be pasted into a Google Sheet:")
+    print("  python power-gadget.py --power-log-file examples/macos-example.csv"
+          " --copy-friendly | pbcopy")
     return
   if "--power-log-file" in arguments:
     power_log_filename = arguments.pop("--power-log-file")
@@ -159,6 +168,7 @@ def main():
   else:
     print("Missing mandatory argument: --power-log-file")
     return
+  copy_friendly = arguments.pop("--copy-friendly", None) != None
   if len(arguments) > 0:
     line = "Unrecognized arguments:"
     for key in arguments:
@@ -169,9 +179,6 @@ def main():
   # Parse Power Log
   (table_keys, table, summaries_keys, summaries) =\
       parse_power_log(power_log_filename)
-  print("Parsed power log file: " + power_log_filename)
-  print_parsed_power_log(table_keys, table, summaries_keys, summaries)
-  print("")
 
   kCpuUtilizationKey = "CPU Utilization(%)"
   kCpuFrequencyKey = "CPU Frequency_0(MHz)"
@@ -222,23 +229,44 @@ def main():
                         summaries.get(kAveragePackagePowerKey, 0) +\
                         summaries.get(kAveragePackageDramPowerKey, 0)
 
-  # Results
-  print("CPU UTILIZATION AND FREQUENCY OF SAMPLES")
-  print("    Average CPU Utilization(%): {0}  (std dev: {1})".format(\
-            cpu_utilization_mean, cpu_utilization_std_dev))
-  print("    Average CPU Frequency(MHz): {0}  (std dev: {1})".format(\
-            cpu_frequency_mean, cpu_frequency_std_dev))
-  print("")
-  print("NORMALIZED CPU UTILIZATION (AGGREGATED FROM SAMPLES)")
-  print("            Cycles Utilized(%): {0}".format(\
-            cycles_utilized_percentage))
-  print("    Average Cycles Utilized(M): {0}".format(\
-            cycles_utilized_per_sample))
-  print("   Average Cycles Available(M): {0}".format(\
-            cycles_available_per_sample))
-  print("")
-  print("POWER USAGE (PROCESSOR OR PACKAGE + DRAM)")
-  print("  Average Total Power Usage(W): {0}".format(average_power_usage))
+  # Print results
+  if not copy_friendly:
+    print("Parsed power log file: " + power_log_filename)
+    print_parsed_power_log(table_keys, table, summaries_keys, summaries)
+    print("")
+    print("CPU UTILIZATION AND FREQUENCY OF SAMPLES")
+    print("    Average CPU Utilization(%): {0}  (std dev: {1})".format(\
+              cpu_utilization_mean, cpu_utilization_std_dev))
+    print("    Average CPU Frequency(MHz): {0}  (std dev: {1})".format(\
+              cpu_frequency_mean, cpu_frequency_std_dev))
+    print("")
+    print("NORMALIZED CPU UTILIZATION (AGGREGATED FROM SAMPLES)")
+    print("            Cycles Utilized(%): {0}".format(\
+              cycles_utilized_percentage))
+    print("    Average Cycles Utilized(M): {0}".format(\
+              cycles_utilized_per_sample))
+    print("   Average Cycles Available(M): {0}".format(\
+              cycles_available_per_sample))
+    print("")
+    print("POWER USAGE (PROCESSOR OR PACKAGE + DRAM)")
+    print("  Average Total Power Usage(W): {0}".format(average_power_usage))
+  else:
+    for key in summaries_keys:
+      print("{0}\t{1}".format(key, summaries[key]))
+    print("\t")
+    print("Average CPU Utilization(%)\t{0}".format(cpu_utilization_mean))
+    print("Average CPU Utilization(%) std dev\t{0}".format(\
+          cpu_utilization_std_dev))
+    print("Average CPU Frequency(MHz)\t{0}".format(cpu_frequency_mean))
+    print("Average CPU Frequency(MHz) std dev\t{0}".format(\
+          cpu_frequency_std_dev))
+    print("\t")
+    print("Cycles Utilized(%)\t{0}".format(cycles_utilized_percentage))
+    print("Average Cycles Utilized(M)\t{0}".format(cycles_utilized_per_sample))
+    print("Average Cycles Available(M)\t{0}".format(\
+          cycles_available_per_sample))
+    print("\t")
+    print("Average Total Power Usage(W)\t{0}".format(average_power_usage))
 
 if __name__ == "__main__":
   main()
