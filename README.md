@@ -98,11 +98,13 @@ The "Average CPU Utilization(%)" is (5% + 10%) / 2 = 7.5%.
 
 The "Cycles Utilized(%)" is (5% * 1000 + 10% * 2000) / (1000 + 2000) = 8.33%.
 
-If the CPU frequency is fairly stable during the measurements, these values will be quite similar. But if the CPU frequencies are variable during the test, the "Cycles Utilized(%)" might give a more honest picture of the amount of workload on the system. When comparing multiple measurements "Average Cycles Available(M)" is of interest.
+If the CPU frequency is fairly stable during the measurements, these values will be quite similar. But if the CPU frequencies are variable during the test, the "Cycles Utilized(%)" might give a more honest picture of the amount of workload on the system. However note that this is still a percentage of the amount of cycles available, which could differ between different tests. When comparing multiple tests, "Average Cycles Utilized(M)" and "Average Cycles Available(M)" tell a more comparable story.
 
-> What are "Average Cycles Available(M)"?
+> What are "Average Cycles Utilized(M)" and "Average Cycles Available(M)"?
 
-These are the average "CPU Frequency_0(MHz)" of all samples. When sampling once per second, this is an estimate of the amount of CPU cycles per second, i.e. the "effective MHz" of the processor.
+"Average Cycles Available(M)" is the average "CPU Frequency_0(MHz)" of all samples. This is an estimate of the amount of CPU cycles per second, i.e. the "effective MHz" of the processor.
+
+"Average Cycles Utilized(M)" is how many Mega-cycles per second are being utilized. This gives us an idea about the absolute amount of work that is being performed. This value can be compared between different tests, even if the CPU was using different frequencies during the tests, which is likely if the workload was significantly different between the tests.
 
 ### Tips
 
