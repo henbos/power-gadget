@@ -76,6 +76,12 @@ If you use the `--copy-friendly` argument you get a minimized output separated b
 python power-gadget.py --power-log-file examples/macos-example.csv --copy-friendly | pbcopy
 ```
 
+Then, if you're making a comparison with other measurements already pasted into a Google Sheet and you only want to paste in the values column, add `--values-only` like so:
+
+```
+python power-gadget.py --power-log-file examples/macos-example.csv --copy-friendly --values-only | pbcopy
+```
+
 ### Q&A
 
 > What's the difference between "Average CPU Utilization(%)" and "Cycles Utilized(%)"?
