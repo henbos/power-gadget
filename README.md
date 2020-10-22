@@ -69,6 +69,13 @@ POWER USAGE (PROCESSOR OR PACKAGE + DRAM)
   Average Total Power Usage(W): 3.097737
 ```
 
+### Copy to clipboard for pasting into Google Sheets
+If you use the `--copy-friendly` argument you get a minimized output separated by tabs, this allows it to be piped into clipboard and pasted into Google Sheets as two columns. For example, on macOS:
+
+```
+python power-gadget.py --power-log-file examples/macos-example.csv --copy-friendly | pbcopy
+```
+
 ### Q&A
 
 > What's the difference between "Average CPU Utilization(%)" and "Cycles Utilized(%)"?
