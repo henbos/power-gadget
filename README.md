@@ -2,7 +2,7 @@
 
 ### Introduction
 
-This is a script that parses power logs collected with [Intel Power Gadget](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html).
+This is a script that parses power logs collected with [Intel Power Gadget](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html). It is supported on Windows and macOS if you have a supported Intel processor.
 
 The script summarizes power log contents, calculates standard deviations of CPU utilization and CPU frequencies, normalizes the CPU utilization by frequency and outputs the system's total average power consumption.
 
