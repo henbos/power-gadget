@@ -107,7 +107,7 @@ def print_parsed_power_log(table_keys, table, summaries_keys, summaries):
   for key in summaries_keys:
     print("  {0}: {1}".format(key, summaries[key]))
 
-# Math utils
+# Misc utils
 
 def calculate_standard_deviation(values):
   mean = 0
@@ -124,6 +124,12 @@ def calculate_standard_deviation(values):
   # The standard deviation is the squaree root of the variance.
   standard_deviation = math.sqrt(variance)
   return (standard_deviation, variance, mean)
+
+def print_copy_friendly_row(values_only, key, value):
+  if not values_only:
+    print("{0}\t{1}".format(key, value))
+  else:
+    print("{0}".format(value))
 
 # Main
 
@@ -152,6 +158,8 @@ def main():
   if "--help" in arguments:
     print("Use --power-log-file to specify the log file.")
     print("Optionally, use --copy-friendly for a shorter copy-friendly result.")
+    print("If both --copy-friendly and --values-only is supplied, only the "
+          "values column of the copy frienly output is printed.")
     print("")
     print("Example Usage:")
     print("  python power-gadget.py --power-log-file 'test.csv'")
@@ -169,6 +177,7 @@ def main():
     print("Missing mandatory argument: --power-log-file")
     return
   copy_friendly = arguments.pop("--copy-friendly", None) != None
+  values_only = arguments.pop("--values-only", None) != None
   if len(arguments) > 0:
     line = "Unrecognized arguments:"
     for key in arguments:
@@ -252,21 +261,28 @@ def main():
     print("  Average Total Power Usage(W): {0}".format(average_power_usage))
   else:
     for key in summaries_keys:
-      print("{0}\t{1}".format(key, summaries[key]))
-    print("\t")
-    print("Average CPU Utilization(%)\t{0}".format(cpu_utilization_mean))
-    print("Average CPU Utilization(%) std dev\t{0}".format(\
-          cpu_utilization_std_dev))
-    print("Average CPU Frequency(MHz)\t{0}".format(cpu_frequency_mean))
-    print("Average CPU Frequency(MHz) std dev\t{0}".format(\
-          cpu_frequency_std_dev))
-    print("\t")
-    print("Cycles Utilized(%)\t{0}".format(cycles_utilized_percentage))
-    print("Average Cycles Utilized(M)\t{0}".format(cycles_utilized_per_sample))
-    print("Average Cycles Available(M)\t{0}".format(\
-          cycles_available_per_sample))
-    print("\t")
-    print("Average Total Power Usage(W)\t{0}".format(average_power_usage))
+      print_copy_friendly_row(values_only, key, summaries[key])
+    print_copy_friendly_row(values_only, "", "")
+    print_copy_friendly_row(\
+        values_only, "Average CPU Utilization(%)", cpu_utilization_mean)
+    print_copy_friendly_row(\
+        values_only, "Average CPU Utilization(%) std dev",\
+        cpu_utilization_std_dev)
+    print_copy_friendly_row(\
+        values_only, "Average CPU Frequency(MHz)", cpu_frequency_mean)
+    print_copy_friendly_row(\
+        values_only, "Average CPU Frequency(MHz) std dev",\
+        cpu_frequency_std_dev)
+    print_copy_friendly_row(values_only, "", "")
+    print_copy_friendly_row(\
+        values_only, "Cycles Utilized(%)", cycles_utilized_percentage)
+    print_copy_friendly_row(\
+        values_only, "Average Cycles Utilized(M)", cycles_utilized_per_sample)
+    print_copy_friendly_row(\
+        values_only, "Average Cycles Available(M)", cycles_available_per_sample)
+    print_copy_friendly_row(values_only, "", "")
+    print_copy_friendly_row(\
+        values_only, "Average Total Power Usage(W)", average_power_usage)
 
 if __name__ == "__main__":
   main()
